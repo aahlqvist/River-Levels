@@ -6,6 +6,7 @@
   <title>USGS 02233484 • Econlockhatchee River at Chuluota Water Level & Rate Dashboard</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="ian-2022-data.js"></script>
   <!-- Chart.js v4.4.4 UMD -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js';document.head.appendChild(s);"></script>
   <!-- Google Font: Inter -->
@@ -260,7 +261,6 @@
             <button type="button" data-shift-hours="24" title="Shift Hurricane Ian start +1 day" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">+1d</button>
           </div>
 
-          <span id="ianLoadingSpinner" class="hidden w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin ml-1"></span>
         </div>
       </div>
 
@@ -359,10 +359,8 @@
     let currentStationId = "02233484";
     const USGS_PARAM = "00065";
     const EST_OFFSET_MS = -5 * 3600 * 1000; // US Eastern Standard Time (UTC-5)
-    const IAN_BASE_ANCHOR_MS = Date.parse("2022-09-27T05:00:00Z"); // 2022-09-27 00:00 EST
     const IAN_DEFAULT_START_MS = Date.parse("2022-09-28T05:00:00Z"); // 2022-09-28 00:00 EST
     const REFRESH_INTERVAL_SEC = 300; // 5 minutes
-    const IAN_RETRY_COOLDOWN_MS = 5 * 60000; // retry real Ian data at most every 5 min after a failure
 
     // The cached snapshot below holds readings for this station only. Any other station, or any
     // window longer than the snapshot (2 days), gets SIMULATED data and is labelled as such.
@@ -436,10 +434,7 @@
     let showHurricaneIan = false;
     let visibleSeries = { level: true, rate: true, ianLevel: false, ianRate: false }; // Ian is on when either Ian series is shown
     let ianStartMs = IAN_DEFAULT_START_MS;
-    let ianReadingsCache = {};
-    let ianCacheMeta = {}; // stationId -> { source: "live" | "modeled", attemptedAt }
-    let ianRequestSeq = {}; // stationId -> latest Ian request number (older responses are discarded)
-    let ianPendingCount = 0;
+    let ianReadingsCache = {}; // stationId -> parsed saved Ian readings
     let liveRequestSeq = 0; // latest live request number (older responses are discarded)
     let dataSource = "cached"; // "live" | "cached" | "simulated"
     let alignedIanLevels = [];
@@ -622,38 +617,16 @@
       return prefix.concat(basePts);
     }
 
-    // Generate modeled Hurricane Ian 2022 flood hydrograph fallback when offline
-    // Covers the shifted window [startMs - 1d, startMs + days + 1d] so day/hour shifts never run off the curve
-    function generateFallbackIanReadings(stationId, days = currentPeriodDays, startMs = ianStartMs) {
-      const offset = STATIONS[stationId]?.ianCrestOffsetFt || 0;
-      const startOffsetH = (startMs - IAN_BASE_ANCHOR_MS) / 3600000;
-      const fromHours = Math.min(0, Math.floor(startOffsetH - 24));
-      const totalHours = Math.max(72, Math.ceil(startOffsetH + (days + 2) * 24));
-      const stepMs = days > 30 ? 3600000 : 15 * 60000;
-      const readings = [];
-      const stages = [];
-
-      for (let h = fromHours; h <= totalHours; h += stepMs / 3600000) {
-        const ms = IAN_BASE_ANCHOR_MS + h * 3600000;
-        let stage = 15.8;
-        if (h < 0) {
-          stage = 15.8; // pre-storm baseline
-        } else if (h < 18) {
-          stage = 15.8 + (h / 18) * 1.4;
-        } else if (h < 54) {
-          const p = (h - 18) / 36;
-          stage = 17.2 + 13.4 * (1 - Math.cos(p * Math.PI)) * 0.5;
-        } else if (h < 240) {
-          const decay = (h - 54) / 186;
-          stage = 16.0 + 14.6 * Math.exp(-decay * 2.6);
-        } else {
-          stage = 15.6 + Math.sin(h / 72) * 0.35;
-        }
-        readings.push({ ms, timestamp: formatEstTimestamp(ms), value: 0 });
-        stages.push(stage);
-      }
-      const values = offsetSeriesPreservingShape(stages, offset);
-      readings.forEach((r, i) => { r.value = values[i]; });
+    // Saved Hurricane Ian readings (2022-09-26 00:00 to 2022-10-06 23:45 EST) from ian-2022-data.js; [] if unavailable
+    function getSavedIanReadings(stationId) {
+      if (ianReadingsCache[stationId]) return ianReadingsCache[stationId];
+      const saved = window.IAN_2022_DATA;
+      const rows = saved?.stations?.[stationId] || [];
+      const readings = rows.map(([minutes, value]) => {
+        const ms = saved.startMs + minutes * 60000;
+        return { ms, timestamp: formatEstTimestamp(ms), value };
+      });
+      ianReadingsCache[stationId] = readings;
       return readings;
     }
 
@@ -719,11 +692,13 @@
       alignedIanMovAvgFtHr = new Array(n).fill(null);
 
       if (!showHurricaneIan || n === 0) return;
-      const rawIan = ianReadingsCache[currentStationId] || [];
+      const rawIan = getSavedIanReadings(currentStationId);
       if (rawIan.length === 0) return;
 
       const ianSeries = computeTelemetrySeries(rawIan);
       const baseMs = processedData[0].ms;
+      const ianFirstMs = ianSeries[0].ms;
+      const ianLastMs = ianSeries[ianSeries.length - 1].ms;
 
       // Two-pointer linear match within adaptive tolerance (up to 2h for 365d coarse points)
       const maxToleranceMs = Math.max(30 * 60000, (n > 1 ? (processedData[n - 1].ms - baseMs) / n : 15 * 60000) * 1.5);
@@ -731,6 +706,8 @@
       for (let i = 0; i < n; i++) {
         const elapsedMs = processedData[i].ms - baseMs;
         const targetIanMs = ianStartMs + elapsedMs;
+        // Draw nothing outside the saved Ian window
+        if (targetIanMs < ianFirstMs || targetIanMs > ianLastMs) continue;
 
         while (ptr < ianSeries.length - 1 && ianSeries[ptr + 1].ms <= targetIanMs) {
           ptr++;
@@ -854,80 +831,15 @@
       }
 
       if (showHurricaneIan) {
-        await fetchHurricaneIanData();
+        loadHurricaneIanData();
       } else {
         alignHurricaneIanSeries();
         refreshAllViews();
       }
     }
 
-    // Fetch historical Hurricane Ian readings covering the full active period window
-    async function fetchHurricaneIanData() {
-      const spinner = document.getElementById("ianLoadingSpinner");
-      if (!showHurricaneIan) {
-        alignHurricaneIanSeries();
-        refreshAllViews();
-        return;
-      }
-
-      // Snapshot parameters; the user may switch station/window/shift while the request is in flight
-      const stationId = currentStationId;
-      const periodDays = currentPeriodDays;
-      const startMs = ianStartMs;
-      const requiredStartMs = startMs - 86400000;
-      const requiredEndMs = startMs + periodDays * 86400000 + 86400000;
-      const cached = ianReadingsCache[stationId];
-      const meta = ianCacheMeta[stationId];
-
-      // Refetch when the cached readings don't span the (shifted) Ian window on either side
-      const coverageShort = !cached || cached.length === 0
-        || cached[0].ms > startMs
-        || cached[cached.length - 1].ms < requiredEndMs - 86400000;
-      // Modeled data is only a stand-in after a failed fetch — keep trying for the real readings
-      const retryModeled = meta?.source === "modeled" && Date.now() - meta.attemptedAt > IAN_RETRY_COOLDOWN_MS;
-
-      if (coverageShort || retryModeled) {
-        const myReq = (ianRequestSeq[stationId] = (ianRequestSeq[stationId] || 0) + 1);
-        ianPendingCount++;
-        if (spinner) spinner.classList.remove("hidden");
-
-        let result = null;
-        let source = "modeled";
-        try {
-          const endWindowMs = Math.max(requiredEndMs, Date.parse("2022-10-12T05:00:00Z"));
-          const startIso = new Date(Math.min(requiredStartMs, Date.parse("2022-09-25T05:00:00Z"))).toISOString();
-          const endIso = new Date(endWindowMs).toISOString();
-          const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${stationId}&startDT=${encodeURIComponent(startIso)}&endDT=${encodeURIComponent(endIso)}&parameterCd=${USGS_PARAM}&siteStatus=all`;
-          const ogcUrl = `https://api.waterdata.usgs.gov/ogcapi/v0/collections/continuous/items?f=json&monitoring_location_id=USGS-${stationId}&parameter_code=${USGS_PARAM}&time=${encodeURIComponent(startIso + "/" + endIso)}&limit=5000`;
-          let parsed = await fetchUsgsJsonWithFallback(url, ogcUrl);
-          if (parsed.length > 3500) {
-            const step = Math.ceil(parsed.length / 2500);
-            parsed = parsed.filter((_, idx) => idx % step === 0 || idx === parsed.length - 1);
-          }
-          if (parsed.length > 0) {
-            result = parsed;
-            source = "live";
-          }
-        } catch (err) {
-          console.warn("Hurricane Ian historical fetch failed, using modeled curve:", err);
-        } finally {
-          ianPendingCount--;
-          if (spinner && ianPendingCount === 0) spinner.classList.add("hidden");
-        }
-
-        // A newer Ian request for this station superseded this one; it will render
-        if (ianRequestSeq[stationId] !== myReq) return;
-
-        // Never replace real readings with a modeled curve just because a refetch failed
-        const hadLive = ianCacheMeta[stationId]?.source === "live";
-        if (source === "live" || !hadLive) {
-          ianReadingsCache[stationId] = result || generateFallbackIanReadings(stationId, periodDays, startMs);
-          ianCacheMeta[stationId] = { source, attemptedAt: Date.now() };
-        }
-      }
-
-      // Data was stored under its own station; only draw it if that station is still selected
-      if (stationId !== currentStationId) return;
+    // Draw Hurricane Ian from the saved readings (no network request)
+    function loadHurricaneIanData() {
       alignHurricaneIanSeries();
       refreshAllViews();
     }
@@ -1042,7 +954,6 @@
       const unitSuffix = isInHr ? "in/hr" : "ft/hr";
 
       const levelLabelSuffix = dataSource === "simulated" ? " — SIMULATED" : dataSource === "cached" ? " — cached snapshot" : "";
-      const ianIsModeled = ianCacheMeta[currentStationId]?.source !== "live";
 
       syncSeriesToggles();
 
@@ -1066,7 +977,7 @@
 
       if (visibleSeries.ianLevel && showHurricaneIan && alignedIanLevels.some((v) => v !== null)) {
         datasets.push({
-          label: ianIsModeled ? "Hurricane Ian 2022 — MODELED, not real (ft)" : "Hurricane Ian 2022 (ft)",
+          label: "Hurricane Ian 2022 (ft)",
           data: alignedIanLevels,
           yAxisID: "yLevel",
           borderColor: "#e11d48",
@@ -1133,7 +1044,7 @@
 
       if (visibleSeries.ianRate && showHurricaneIan && ianRateValues.some((v) => v !== null)) {
         datasets.push({
-          label: ianIsModeled ? `Ian Rate — MODELED (${unitSuffix})` : `Ian Rate (${unitSuffix})`,
+          label: `Ian Rate (${unitSuffix})`,
           data: ianRateValues,
           yAxisID: "yRate",
           borderColor: "#9333ea",
@@ -1281,7 +1192,7 @@
           ? "Live USGS readings"
           : dataSource === "cached" ? "Cached snapshot (live data unavailable)" : "SIMULATED data — not real readings";
         const ianText = showHurricaneIan
-          ? (ianCacheMeta[currentStationId]?.source === "live" ? " • Ian: real 2022 readings" : " • Ian: MODELED curve, not real")
+          ? (getSavedIanReadings(currentStationId).length > 0 ? " • Ian: saved USGS readings 9/26–10/06/2022" : " • Ian: no saved data for this station")
           : "";
         sourceLabel.textContent = `${station.dropdownLabel} • ${srcText}${ianText} • Times in EST`;
       }
@@ -1370,14 +1281,11 @@
         "hurricane_ian_gage_height_ft",
         "hurricane_ian_rate_in_per_hr",
         "hurricane_ian_rate_ft_per_hr",
-        "data_source",
-        "hurricane_ian_data_source"
+        "data_source"
       ];
 
-      const ianSource = showHurricaneIan ? (ianCacheMeta[currentStationId]?.source === "live" ? "live" : "modeled") : "";
       const lines = [headers.join(",")];
       processedData.forEach((row, idx) => {
-        const hasIan = alignedIanLevels[idx] !== null;
         lines.push([
           currentStationId,
           `"${row.timestamp} EST"`,
@@ -1390,8 +1298,7 @@
           alignedIanLevels[idx] !== null ? alignedIanLevels[idx].toFixed(2) : "",
           alignedIanRatesInHr[idx] !== null ? alignedIanRatesInHr[idx].toFixed(3) : "",
           alignedIanRatesFtHr[idx] !== null ? alignedIanRatesFtHr[idx].toFixed(4) : "",
-          dataSource,
-          hasIan ? ianSource : ""
+          dataSource
         ].join(","));
       });
 
@@ -1503,7 +1410,7 @@
           const ianOn = visibleSeries.ianLevel || visibleSeries.ianRate;
           if (ianOn !== showHurricaneIan) {
             showHurricaneIan = ianOn;
-            fetchHurricaneIanData();
+            loadHurricaneIanData();
           } else {
             renderChart();
           }
@@ -1522,7 +1429,7 @@
             visibleSeries.ianRate = true;
             syncSeriesToggles();
           }
-          fetchHurricaneIanData();
+          loadHurricaneIanData();
         });
       });
 
@@ -1550,7 +1457,6 @@
       document.getElementById("trendFilterSelect")?.addEventListener("change", renderTelemetryTable);
 
       // Immediately render baseline dataset so chart is visible right away, then sync live USGS
-      // (No Ian pre-fill: a modeled curve in the cache used to block the real 2022 fetch.)
       dataSource = isBaselineSynthetic(currentStationId, currentPeriodDays) ? "simulated" : "cached";
       processedData = computeTelemetrySeries(getBaselineReadingsForStation(currentStationId, currentPeriodDays));
       alignHurricaneIanSeries();
