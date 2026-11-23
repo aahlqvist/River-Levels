@@ -617,7 +617,7 @@
       return prefix.concat(basePts);
     }
 
-    // Saved Hurricane Ian readings (2022-09-26 00:00 to 2022-10-06 23:45 EST) from ian-2022-data.js; [] if unavailable
+    // Saved Hurricane Ian readings (2022-09-26 00:00 to 2022-10-16 23:45 EST) from ian-2022-data.js; [] if unavailable
     function getSavedIanReadings(stationId) {
       if (ianReadingsCache[stationId]) return ianReadingsCache[stationId];
       const saved = window.IAN_2022_DATA;
@@ -1192,7 +1192,7 @@
           ? "Live USGS readings"
           : dataSource === "cached" ? "Cached snapshot (live data unavailable)" : "SIMULATED data — not real readings";
         const ianText = showHurricaneIan
-          ? (getSavedIanReadings(currentStationId).length > 0 ? " • Ian: saved USGS readings 9/26–10/06/2022" : " • Ian: no saved data for this station")
+          ? (getSavedIanReadings(currentStationId).length > 0 ? " • Ian: saved USGS readings 9/26–10/16/2022" : " • Ian: no saved data for this station")
           : "";
         sourceLabel.textContent = `${station.dropdownLabel} • ${srcText}${ianText} • Times in EST`;
       }
