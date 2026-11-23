@@ -359,6 +359,7 @@
     let currentStationId = "02233484";
     const USGS_PARAM = "00065";
     const EST_OFFSET_MS = -5 * 3600 * 1000; // US Eastern Standard Time (UTC-5)
+    const IAN_MAX_GAP_MS = 60 * 60000; // Ian gaps longer than 1 h are drawn as a break in the line
     const IAN_DEFAULT_START_MS = Date.parse("2022-09-28T05:00:00Z"); // 2022-09-28 00:00 EST
     const REFRESH_INTERVAL_SEC = 300; // 5 minutes
 
@@ -630,8 +631,9 @@
       return readings;
     }
 
-    // Process raw readings into rate deltas (in/hr & ft/hr) and N-hour moving averages
-    function computeTelemetrySeries(rawReadings) {
+    // Process raw readings into rate deltas (in/hr & ft/hr) and N-hour moving averages.
+    // Readings more than maxGapMs apart are treated as a data gap: no rate is computed across it.
+    function computeTelemetrySeries(rawReadings, maxGapMs = Infinity) {
       const result = [];
       for (let i = 0; i < rawReadings.length; i++) {
         const curr = rawReadings[i];
@@ -639,7 +641,7 @@
         let rateInHr = null;
         let rateFtHr = null;
 
-        if (prev) {
+        if (prev && curr.ms - prev.ms <= maxGapMs) {
           const dtHours = Math.max(1 / 60, (curr.ms - prev.ms) / 3600000);
           const diffFt = curr.value - prev.value;
           rateFtHr = Number((diffFt / dtHours).toFixed(4));
@@ -695,7 +697,7 @@
       const rawIan = getSavedIanReadings(currentStationId);
       if (rawIan.length === 0) return;
 
-      const ianSeries = computeTelemetrySeries(rawIan);
+      const ianSeries = computeTelemetrySeries(rawIan, IAN_MAX_GAP_MS);
       const baseMs = processedData[0].ms;
       const ianFirstMs = ianSeries[0].ms;
       const ianLastMs = ianSeries[ianSeries.length - 1].ms;
@@ -716,6 +718,8 @@
         let best = ianSeries[ptr];
         if (ptr + 1 < ianSeries.length) {
           const next = ianSeries[ptr + 1];
+          // Inside a gap in the saved readings: leave a break and resume when data is available
+          if (next.ms - best.ms > IAN_MAX_GAP_MS && targetIanMs > best.ms && targetIanMs < next.ms) continue;
           if (Math.abs(next.ms - targetIanMs) < Math.abs(best.ms - targetIanMs)) {
             best = next;
           }
@@ -988,7 +992,7 @@
           tension: 0.25,
           pointRadius: 0,
           pointHoverRadius: 4,
-          spanGaps: true,
+          spanGaps: false,
           order: 1
         });
       }
@@ -1055,7 +1059,7 @@
           tension: 0.25,
           pointRadius: 0,
           pointHoverRadius: 4,
-          spanGaps: true,
+          spanGaps: false,
           order: 5
         });
       }
