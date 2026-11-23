@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USGS 02233484 • Econlockhatchee River at Chuluota Water Level & Rate Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js v4.4.4 UMD -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" onerror="var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js';document.head.appendChild(s);"></script>
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    /* Subtle custom scrollbar for the telemetry table */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+  <!-- Main Container -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Header Card -->
+    <header class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div class="space-y-1.5">
+        <div class="flex items-start gap-3">
+          <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 shrink-0 mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+          </span>
+          <div class="space-y-1 min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <label for="stationSelect" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Monitoring Location
+              </label>
+              <a id="stationMapLink" href="https://www.google.com/maps?q=28.655553,-81.169786" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>View on Map</span>
+              </a>
+              <span class="text-slate-300">&bull;</span>
+              <a id="stationUsgsLink" href="https://waterdata.usgs.gov/monitoring-location/USGS-02233484/" target="_blank" rel="noopener noreferrer" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:underline transition">
+                USGS Page &nearr;
+              </a>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <select id="stationSelect" aria-label="Monitoring Location" class="text-sm sm:text-base font-bold text-slate-900 tracking-tight bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl px-3 py-1.5 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition cursor-pointer max-w-full">
+                <option value="02233484" selected>Econlockhatchee River Near Oviedo, FL - USGS-02233484</option>
+                <option value="02233475">LT Econlockhatchee R at State HWY434 NR Oviedo, FL - USGS-02233475</option>
+                <option value="02233500">Econlockhatchee River Near Chuluota, FL - USGS-02233500</option>
+                <option value="02234000">St. Johns River Above Lake Harney Near Geneva, FL - USGS-02234000</option>
+              </select>
+              <span id="liveStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                <span id="liveStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="liveStatusText">Connecting USGS...</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <p id="headerSubtitle" class="text-sm text-slate-500 mt-1">
+          Econlockhatchee River Near Oviedo, FL &bull; Parameter 00065 (Gage Height, ft)
+        </p>
+      </div>
+
+      <!-- Live Sync & Export Controls -->
+      <div class="flex flex-wrap items-center gap-2.5">
+        <!-- 5-Min Auto-Refresh Countdown Pill -->
+        <div class="inline-flex items-center gap-2 bg-slate-100/90 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-600">
+          <span>Next sync:</span>
+          <span id="countdownTimer" class="font-mono font-bold text-slate-900">05:00</span>
+          <button id="toggleAutoRefreshBtn" type="button" class="ml-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold transition cursor-pointer">
+            Pause
+          </button>
+        </div>
+
+        <!-- Manual Refresh Button -->
+        <button id="manualRefreshBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.99] shadow-sm transition cursor-pointer">
+          <svg id="refreshIcon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>Refresh Now</span>
+        </button>
+
+        <!-- Export CSV Button -->
+        <button id="exportCsvBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.99] shadow-sm transition cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Fallback Warning Banner (Hidden when live USGS API succeeds) -->
+    <div id="fallbackBanner" class="hidden bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-amber-900">
+      <div class="flex items-center gap-2.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="fallbackMessage">Live USGS API unreachable from this browser environment — displaying cached baseline dataset.</span>
+      </div>
+      <button id="retryLiveBtn" type="button" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-amber-600 text-white font-semibold hover:bg-amber-700 transition cursor-pointer shrink-0">
+        Retry Live USGS
+      </button>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Latest Water Level -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Latest Gage Height</span>
+          <span class="px-2 py-0.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700">ft</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpiLatestLevel" class="text-2xl sm:text-3xl font-bold text-slate-900">--.--</span>
+          <span class="text-sm font-medium text-slate-500">ft</span>
+        </div>
+        <p id="kpiLatestTime" class="mt-1.5 text-xs text-slate-500">Awaiting reading...</p>
+      </div>
+
+      <!-- Net Window Change -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Net Window Change</span>
+          <span id="kpiNetBadge" class="px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700">--</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpiNetChange" class="text-2xl sm:text-3xl font-bold text-slate-900">--.--</span>
+          <span class="text-sm font-medium text-slate-500">ft</span>
+        </div>
+        <p id="kpiWindowRange" class="mt-1.5 text-xs text-slate-500">Min --.-- ft &bull; Max --.-- ft</p>
+      </div>
+
+      <!-- Latest Rate of Change -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Current Rate</span>
+          <span id="kpiRateUnitBadge" class="px-2 py-0.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700">in / hr</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpiCurrentRate" class="text-2xl sm:text-3xl font-bold text-amber-600">--.--</span>
+          <span id="kpiRateUnitText" class="text-sm font-medium text-slate-500">in/hr</span>
+        </div>
+        <p id="kpiAvgRate" class="mt-1.5 text-xs text-slate-500">Window avg: --.-- in/hr</p>
+      </div>
+
+      <!-- Peak Rate & Hurricane Ian Reference -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Peak Rise Rate</span>
+          <span id="kpiIanPeakBadge" class="px-2 py-0.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700">Ian Peak: --.-- ft</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span id="kpiPeakRate" class="text-2xl sm:text-3xl font-bold text-slate-900">--.--</span>
+          <span id="kpiPeakRateUnit" class="text-sm font-medium text-slate-500">in/hr</span>
+        </div>
+        <p id="kpiPeakRateTime" class="mt-1.5 text-xs text-slate-500">Occurred at --</p>
+      </div>
+    </section>
+
+    <!-- Main Chart Card -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 sm:p-6 space-y-5">
+      <!-- Chart Controls Toolbar -->
+      <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 pb-4 border-b border-slate-100">
+        <!-- Period Selector (1d, 2d, 3d, 7d, 30d, 365d) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Window:</span>
+          <div id="periodSelectorGroup" class="inline-flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200/70">
+            <button type="button" data-period="P1D" data-days="1" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-sm transition cursor-pointer">1d</button>
+            <button type="button" data-period="P2D" data-days="2" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">2d</button>
+            <button type="button" data-period="P3D" data-days="3" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">3d</button>
+            <button type="button" data-period="P7D" data-days="7" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">7d</button>
+            <button type="button" data-period="P30D" data-days="30" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">30d</button>
+            <button type="button" data-period="P365D" data-days="365" class="period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">365d</button>
+          </div>
+        </div>
+
+        <!-- Rate Units & Moving Avg Controls -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Rate Unit Toggle -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200/70">
+            <button id="unitInHrBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-amber-700 shadow-sm transition cursor-pointer">
+              in / hr
+            </button>
+            <button id="unitHrBtn" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">
+              ft / hr
+            </button>
+          </div>
+
+          <!-- Moving Average Window (hours; 0 = off, 1h default) -->
+          <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 select-none">
+            <span>Rolling avg (rate)</span>
+            <select id="movingAvgSelect" title="Moving average window for the rate series (0 = off)" class="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-semibold text-slate-700 cursor-pointer focus:ring-amber-500 focus:border-amber-500">
+              <option value="0">0 (off)</option>
+              <option value="1" selected>1h</option>
+              <option value="4">4h</option>
+              <option value="8">8h</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <!-- Per-Series Visibility Toggles -->
+      <div id="seriesToggleGroup" class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 mr-1">Show:</span>
+        <label class="series-toggle inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer select-none hover:bg-slate-100 transition">
+          <input type="checkbox" data-series="level" checked class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#2563eb" />
+          <span class="w-3 h-0.5 rounded" style="background:#2563eb"></span>
+          <span>Gage Height</span>
+        </label>
+        <label class="series-toggle inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer select-none hover:bg-slate-100 transition">
+          <input type="checkbox" data-series="rate" checked class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#d97706" />
+          <span class="w-3 h-0.5 rounded" style="background:#d97706"></span>
+          <span>Rate of Change</span>
+        </label>
+        <label class="series-toggle inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer select-none hover:bg-slate-100 transition">
+          <input type="checkbox" data-series="ianLevel" class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#e11d48" />
+          <span class="w-3 h-0.5 rounded" style="background:repeating-linear-gradient(90deg,#e11d48 0 4px,transparent 4px 6px)"></span>
+          <span>Ian Gage Height</span>
+        </label>
+        <label class="series-toggle inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer select-none hover:bg-slate-100 transition">
+          <input type="checkbox" data-series="ianRate" class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#9333ea" />
+          <span class="w-3 h-0.5 rounded" style="background:repeating-linear-gradient(90deg,#9333ea 0 4px,transparent 4px 6px)"></span>
+          <span>Ian Rate</span>
+        </label>
+        <!-- Hurricane Ian (09/28/2022) start + Day/Hour Shift Controls -->
+        <div class="inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-50/70 border border-rose-200/90">
+          <span class="inline-flex items-center gap-2 text-xs font-semibold text-rose-800 select-none pr-1">
+            <span>Hurricane Ian</span>
+            <span id="ianStartLabel" class="font-mono text-[11px] bg-white/90 text-rose-700 px-1.5 py-0.5 rounded-md border border-rose-200">09/28/2022 00:00</span>
+          </span>
+
+          <!-- Shift Steppers (-1d, -1h, +1h, +1d) -->
+          <div class="inline-flex items-center gap-1 border-l border-rose-200 pl-1.5">
+            <button type="button" data-shift-hours="-24" title="Shift Hurricane Ian start -1 day" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">-1d</button>
+            <button type="button" data-shift-hours="-1" title="Shift Hurricane Ian start -1 hour" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">-1h</button>
+            <button type="button" data-shift-hours="1" title="Shift Hurricane Ian start +1 hour" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">+1h</button>
+            <button type="button" data-shift-hours="24" title="Shift Hurricane Ian start +1 day" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">+1d</button>
+          </div>
+
+          <span id="ianLoadingSpinner" class="hidden w-3.5 h-3.5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin ml-1"></span>
+        </div>
+      </div>
+
+      <!-- Dual-Axis Chart Canvas Container -->
+      <div class="relative w-full h-[360px] sm:h-[440px]">
+        <canvas id="waterLevelChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Telemetry Log Card -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Telemetry Log & Interval Rate Deltas</h2>
+          <p id="tableSourceLabel" class="text-xs text-slate-500 mt-0.5">Loading telemetry log...</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <select id="dateFilterSelect" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer">
+            <option value="ALL">All Dates</option>
+          </select>
+          <select id="trendFilterSelect" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 cursor-pointer">
+            <option value="ALL">All Trends</option>
+            <option value="RAPID">Rapid Rise (&ge; +4.8 in/hr)</option>
+            <option value="RISING">Rising (&gt; 0)</option>
+            <option value="STEADY">Steady (0.00)</option>
+            <option value="FALLING">Falling (&lt; 0)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto max-h-[420px]">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-50/95 sticky top-0 z-10 border-b border-slate-200/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <tr>
+              <th class="py-3 px-4">Timestamp (EST)</th>
+              <th class="py-3 px-4 text-right">Gage Height (ft)</th>
+              <th class="py-3 px-4 text-right">Rate (in / hr)</th>
+              <th class="py-3 px-4 text-right">Rate (ft / hr)</th>
+              <th id="movAvgHeader" class="py-3 px-4 text-right">1h Moving Avg</th>
+              <th class="py-3 px-4 text-right text-rose-700">Ian 2022 (ft)</th>
+              <th class="py-3 px-4 text-right text-rose-700">Ian Rate</th>
+              <th class="py-3 px-4 text-center">Trend Status</th>
+            </tr>
+          </thead>
+          <tbody id="telemetryTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Notification Banner -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5">
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span id="toastText">Updated</span>
+    </div>
+  </div>
+
+  <script>
+    // USGS Station Catalog & Hurricane Ian Configuration
+    const STATIONS = {
+      "02233484": {
+        id: "02233484",
+        name: "Econlockhatchee River Near Oviedo, FL",
+        dropdownLabel: "Econlockhatchee River Near Oviedo, FL - USGS-02233484",
+        mapUrl: "https://www.google.com/maps?q=28.655553,-81.169786",
+        usgsUrl: "https://waterdata.usgs.gov/monitoring-location/USGS-02233484/",
+        ianCrestOffsetFt: 0
+      },
+      "02233475": {
+        id: "02233475",
+        name: "LT Econlockhatchee R at State HWY434 NR Oviedo, FL",
+        dropdownLabel: "LT Econlockhatchee R at State HWY434 NR Oviedo, FL - USGS-02233475",
+        mapUrl: "https://www.google.com/maps?q=28.620000,-81.207842",
+        usgsUrl: "https://waterdata.usgs.gov/monitoring-location/USGS-02233475/",
+        ianCrestOffsetFt: 11.45
+      },
+      "02233500": {
+        id: "02233500",
+        name: "Econlockhatchee River Near Chuluota, FL",
+        dropdownLabel: "Econlockhatchee River Near Chuluota, FL - USGS-02233500",
+        mapUrl: "https://www.google.com/maps?q=28.677778,-81.114167",
+        usgsUrl: "https://waterdata.usgs.gov/monitoring-location/USGS-02233500/",
+        ianCrestOffsetFt: -7.85
+      },
+      "02234000": {
+        id: "02234000",
+        name: "St. Johns River Above Lake Harney Near Geneva, FL",
+        dropdownLabel: "St. Johns River Above Lake Harney Near Geneva, FL - USGS-02234000",
+        mapUrl: "https://www.google.com/maps?q=28.714161,-81.035340",
+        usgsUrl: "https://waterdata.usgs.gov/monitoring-location/USGS-02234000/",
+        ianCrestOffsetFt: -19.50
+      }
+    };
+
+    let currentStationId = "02233484";
+    const USGS_PARAM = "00065";
+    const EST_OFFSET_MS = -5 * 3600 * 1000; // US Eastern Standard Time (UTC-5)
+    const IAN_BASE_ANCHOR_MS = Date.parse("2022-09-27T05:00:00Z"); // 2022-09-27 00:00 EST
+    const IAN_DEFAULT_START_MS = Date.parse("2022-09-28T05:00:00Z"); // 2022-09-28 00:00 EST
+    const REFRESH_INTERVAL_SEC = 300; // 5 minutes
+    const IAN_RETRY_COOLDOWN_MS = 5 * 60000; // retry real Ian data at most every 5 min after a failure
+
+    // The cached snapshot below holds readings for this station only. Any other station, or any
+    // window longer than the snapshot (2 days), gets SIMULATED data and is labelled as such.
+    const BASELINE_STATION_ID = "02233484";
+    const BASELINE_MAX_DAYS = 2;
+
+    // Baseline fallback readings (updated with latest USGS 02233484 readings in EST)
+    const baselineRawReadings = [
+      ["2026-11-18 17:00", 15.73], ["2026-11-18 17:15", 15.76], ["2026-11-18 17:30", 15.78], ["2026-11-18 17:45", 15.81],
+      ["2026-11-18 18:00", 15.83], ["2026-11-18 18:15", 15.85], ["2026-11-18 18:30", 15.88], ["2026-11-18 18:45", 15.91],
+      ["2026-11-18 19:00", 15.93], ["2026-11-18 19:15", 15.95], ["2026-11-18 19:30", 15.97], ["2026-11-18 19:45", 16.00],
+      ["2026-11-18 20:00", 16.02], ["2026-11-18 20:15", 16.05], ["2026-11-18 20:30", 16.07], ["2026-11-18 20:45", 16.10],
+      ["2026-11-18 21:00", 16.12], ["2026-11-18 21:15", 16.16], ["2026-11-18 21:30", 16.21], ["2026-11-18 21:45", 16.25],
+      ["2026-11-18 22:00", 16.30], ["2026-11-18 22:15", 16.34], ["2026-11-18 22:30", 16.38], ["2026-11-18 22:45", 16.43],
+      ["2026-11-18 23:00", 16.48], ["2026-11-18 23:15", 16.54], ["2026-11-18 23:30", 16.59], ["2026-11-18 23:45", 16.64],
+      ["2026-11-19 00:00", 16.71], ["2026-11-19 00:15", 16.76], ["2026-11-19 00:30", 16.81], ["2026-11-19 00:45", 16.86],
+      ["2026-11-19 01:00", 16.91], ["2026-11-19 01:15", 16.96], ["2026-11-19 01:30", 16.99], ["2026-11-19 01:45", 17.06],
+      ["2026-11-19 02:00", 17.11], ["2026-11-19 02:15", 17.16], ["2026-11-19 02:30", 17.21], ["2026-11-19 02:45", 17.26],
+      ["2026-11-19 03:00", 17.30], ["2026-11-19 03:15", 17.38], ["2026-11-19 03:30", 17.45], ["2026-11-19 03:45", 17.51],
+      ["2026-11-19 04:00", 17.57], ["2026-11-19 04:15", 17.63], ["2026-11-19 04:30", 17.70], ["2026-11-19 04:45", 17.77],
+      ["2026-11-19 05:00", 17.83], ["2026-11-19 05:15", 17.91], ["2026-11-19 05:30", 17.98], ["2026-11-19 05:45", 18.05],
+      ["2026-11-19 06:00", 18.12], ["2026-11-19 06:15", 18.19], ["2026-11-19 06:30", 18.25], ["2026-11-19 06:45", 18.32],
+      ["2026-11-19 07:00", 18.38], ["2026-11-19 07:15", 18.45], ["2026-11-19 07:30", 18.50], ["2026-11-19 07:45", 18.57],
+      ["2026-11-19 08:00", 18.63], ["2026-11-19 08:15", 18.69], ["2026-11-19 08:30", 18.76], ["2026-11-19 08:45", 18.83],
+      ["2026-11-19 09:00", 18.89], ["2026-11-19 09:15", 18.97], ["2026-11-19 09:30", 19.04], ["2026-11-19 09:45", 19.12],
+      ["2026-11-19 10:00", 19.19], ["2026-11-19 10:15", 19.27], ["2026-11-19 10:30", 19.35], ["2026-11-19 10:45", 19.42],
+      ["2026-11-19 11:00", 19.51], ["2026-11-19 11:15", 19.60], ["2026-11-19 11:30", 19.71], ["2026-11-19 11:45", 19.82],
+      ["2026-11-19 12:00", 19.94], ["2026-11-19 12:15", 20.04], ["2026-11-19 12:30", 20.13], ["2026-11-19 12:45", 20.23],
+      ["2026-11-19 13:00", 20.35], ["2026-11-19 13:15", 20.46], ["2026-11-19 13:30", 20.57], ["2026-11-19 13:45", 20.68],
+      ["2026-11-19 14:00", 20.78], ["2026-11-19 14:15", 20.89], ["2026-11-19 14:30", 21.00], ["2026-11-19 14:45", 21.11],
+      ["2026-11-19 15:00", 21.21], ["2026-11-19 15:15", 21.32], ["2026-11-19 15:30", 21.43], ["2026-11-19 15:45", 21.54],
+      ["2026-11-19 16:00", 21.63], ["2026-11-19 16:15", 21.74], ["2026-11-19 16:30", 21.84], ["2026-11-19 16:45", 21.94],
+      ["2026-11-19 17:00", 22.04], ["2026-11-19 17:15", 22.15], ["2026-11-19 17:30", 22.25], ["2026-11-19 17:45", 22.34],
+      ["2026-11-19 18:00", 22.44], ["2026-11-19 18:15", 22.54], ["2026-11-19 18:30", 22.64], ["2026-11-19 18:45", 22.73],
+      ["2026-11-19 19:00", 22.83], ["2026-11-19 19:15", 22.92], ["2026-11-19 19:30", 23.02], ["2026-11-19 19:45", 23.11],
+      ["2026-11-19 20:00", 23.20], ["2026-11-19 20:15", 23.29], ["2026-11-19 20:30", 23.39], ["2026-11-19 20:45", 23.48],
+      ["2026-11-19 21:00", 23.57], ["2026-11-19 21:15", 23.66], ["2026-11-19 21:30", 23.76], ["2026-11-19 21:45", 23.85],
+      ["2026-11-19 22:00", 23.94], ["2026-11-19 22:15", 24.03], ["2026-11-19 22:30", 24.13], ["2026-11-19 22:45", 24.22],
+      ["2026-11-19 23:00", 24.31], ["2026-11-19 23:15", 24.40], ["2026-11-19 23:30", 24.50], ["2026-11-19 23:45", 24.59],
+      ["2026-11-20 00:00", 24.68], ["2026-11-20 00:15", 24.76], ["2026-11-20 00:30", 24.85], ["2026-11-20 00:45", 24.93],
+      ["2026-11-20 01:00", 25.02], ["2026-11-20 01:15", 25.10], ["2026-11-20 01:30", 25.18], ["2026-11-20 01:45", 25.26],
+      ["2026-11-20 02:00", 25.34], ["2026-11-20 02:15", 25.42], ["2026-11-20 02:30", 25.50], ["2026-11-20 02:45", 25.58],
+      ["2026-11-20 03:00", 25.66], ["2026-11-20 03:15", 25.73], ["2026-11-20 03:30", 25.80], ["2026-11-20 03:45", 25.88],
+      ["2026-11-20 04:00", 25.95], ["2026-11-20 04:15", 26.02], ["2026-11-20 04:30", 26.10], ["2026-11-20 04:45", 26.17],
+      ["2026-11-20 05:00", 26.25], ["2026-11-20 05:15", 26.32], ["2026-11-20 05:30", 26.40], ["2026-11-20 05:45", 26.47],
+      ["2026-11-20 06:00", 26.54], ["2026-11-20 06:15", 26.61], ["2026-11-20 06:30", 26.67], ["2026-11-20 06:45", 26.73],
+      ["2026-11-20 07:00", 26.79], ["2026-11-20 07:15", 26.85], ["2026-11-20 07:30", 26.91], ["2026-11-20 07:45", 26.96],
+      ["2026-11-20 08:00", 27.02], ["2026-11-20 08:15", 27.08], ["2026-11-20 08:30", 27.13], ["2026-11-20 08:45", 27.18],
+      ["2026-11-20 09:00", 27.23], ["2026-11-20 09:15", 27.28], ["2026-11-20 09:30", 27.33], ["2026-11-20 09:45", 27.37],
+      ["2026-11-20 10:00", 27.42], ["2026-11-20 10:15", 27.48], ["2026-11-20 10:30", 27.53], ["2026-11-20 10:45", 27.58],
+      ["2026-11-20 11:00", 27.64], ["2026-11-20 11:15", 27.69], ["2026-11-20 11:30", 27.74], ["2026-11-20 11:45", 27.78],
+      ["2026-11-20 12:00", 27.83], ["2026-11-20 12:15", 27.88], ["2026-11-20 12:30", 27.92], ["2026-11-20 12:45", 27.96],
+      ["2026-11-20 13:00", 28.00], ["2026-11-20 13:15", 28.03], ["2026-11-20 13:30", 28.06], ["2026-11-20 13:45", 28.09],
+      ["2026-11-20 14:00", 28.13], ["2026-11-20 14:15", 28.16], ["2026-11-20 14:30", 28.19], ["2026-11-20 14:45", 28.21],
+      ["2026-11-20 15:00", 28.24], ["2026-11-20 15:15", 28.26], ["2026-11-20 15:30", 28.29], ["2026-11-20 15:45", 28.31],
+      ["2026-11-20 16:00", 28.33], ["2026-11-20 16:15", 28.36], ["2026-11-20 16:30", 28.38], ["2026-11-20 16:45", 28.40],
+      ["2026-11-20 17:00", 28.43], ["2026-11-20 17:15", 28.45], ["2026-11-20 17:30", 28.48], ["2026-11-20 17:45", 28.50],
+      ["2026-11-20 18:00", 28.53], ["2026-11-20 18:15", 28.55], ["2026-11-20 18:30", 28.58], ["2026-11-20 18:45", 28.60],
+      ["2026-11-20 19:00", 28.63], ["2026-11-20 19:15", 28.65], ["2026-11-20 19:30", 28.68], ["2026-11-20 19:45", 28.70],
+      ["2026-11-20 20:00", 28.73], ["2026-11-20 20:15", 28.75], ["2026-11-20 20:30", 28.77], ["2026-11-20 20:45", 28.78],
+      ["2026-11-20 21:00", 28.79], ["2026-11-20 21:15", 28.80], ["2026-11-20 21:30", 28.80]
+    ];
+
+    // Dashboard State Variables
+    let processedData = [];
+    let currentPeriod = "P1D";
+    let currentPeriodDays = 1;
+    let rateUnit = "in_hr"; // "in_hr" or "ft_hr"
+    let movingAvgHours = 1; // 0 = off
+    let showMovingAvg = true;
+    let showHurricaneIan = false;
+    let visibleSeries = { level: true, rate: true, ianLevel: false, ianRate: false }; // Ian is on when either Ian series is shown
+    let ianStartMs = IAN_DEFAULT_START_MS;
+    let ianReadingsCache = {};
+    let ianCacheMeta = {}; // stationId -> { source: "live" | "modeled", attemptedAt }
+    let ianRequestSeq = {}; // stationId -> latest Ian request number (older responses are discarded)
+    let ianPendingCount = 0;
+    let liveRequestSeq = 0; // latest live request number (older responses are discarded)
+    let dataSource = "cached"; // "live" | "cached" | "simulated"
+    let alignedIanLevels = [];
+    let alignedIanTimestamps = [];
+    let alignedIanRatesInHr = [];
+    let alignedIanRatesFtHr = [];
+    let alignedIanMovAvgInHr = [];
+    let alignedIanMovAvgFtHr = [];
+    let isLiveConnected = false;
+    let autoRefreshEnabled = true;
+    let countdownRemaining = REFRESH_INTERVAL_SEC;
+    let countdownIntervalId = null;
+    let chartInstance = null;
+    let toastTimeout = null;
+
+    // Show subtle toast notification
+    function showToast(message) {
+      const banner = document.getElementById("toastBanner");
+      const text = document.getElementById("toastText");
+      if (!banner || !text) return;
+      text.textContent = message;
+      banner.classList.remove("translate-y-20", "opacity-0");
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        banner.classList.add("translate-y-20", "opacity-0");
+      }, 3000);
+    }
+
+    // Format epoch ms to US Eastern Standard Time (EST, UTC-5) strings
+    function formatEstTimestamp(ms) {
+      const d = new Date(ms + EST_OFFSET_MS);
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const hh = String(d.getUTCHours()).padStart(2, "0");
+      const min = String(d.getUTCMinutes()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+    }
+
+    function formatEstLabelShort(ms) {
+      const d = new Date(ms + EST_OFFSET_MS);
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const hh = String(d.getUTCHours()).padStart(2, "0");
+      const min = String(d.getUTCMinutes()).padStart(2, "0");
+      return `${mm}/${dd} ${hh}:${min}`;
+    }
+
+    function formatIanHeaderDate(ms) {
+      const d = new Date(ms + EST_OFFSET_MS);
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      const yyyy = d.getUTCFullYear();
+      const hh = String(d.getUTCHours()).padStart(2, "0");
+      const min = String(d.getUTCMinutes()).padStart(2, "0");
+      return `${mm}/${dd}/${yyyy} ${hh}:${min}`;
+    }
+
+    // Parse USGS WaterServices JSON into sorted [{ ms, timestamp, value }]
+    function parseUsgsReadings(json) {
+      // Support both NWIS WaterServices JSON and OGC API Features GeoJSON
+      if (json && Array.isArray(json.features)) {
+        const parsedOgc = [];
+        for (const feat of json.features) {
+          const props = feat?.properties || {};
+          const val = parseFloat(props.value);
+          if (Number.isNaN(val) || val <= -900) continue;
+          const ms = Date.parse(props.time);
+          if (Number.isNaN(ms)) continue;
+          parsedOgc.push({
+            ms,
+            timestamp: formatEstTimestamp(ms),
+            value: val
+          });
+        }
+        parsedOgc.sort((a, b) => a.ms - b.ms);
+        return parsedOgc;
+      }
+
+      const ts = json?.value?.timeSeries?.[0];
+      const rawVals = ts?.values?.[0]?.value || [];
+      const parsed = [];
+      for (const item of rawVals) {
+        const val = parseFloat(item.value);
+        if (Number.isNaN(val) || val <= -900) continue;
+        const ms = Date.parse(item.dateTime);
+        if (Number.isNaN(ms)) continue;
+        parsed.push({
+          ms,
+          timestamp: formatEstTimestamp(ms),
+          value: val
+        });
+      }
+      parsed.sort((a, b) => a.ms - b.ms);
+      return parsed;
+    }
+
+    // Resilient multi-endpoint fetch helper (Direct NWIS -> Direct OGC API -> CORS Proxy fallback)
+    async function fetchUsgsJsonWithFallback(targetUrl, ogcFallbackUrl = null) {
+      const candidates = [targetUrl];
+      if (ogcFallbackUrl) candidates.push(ogcFallbackUrl);
+      candidates.push(`https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`);
+      candidates.push(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`);
+
+      let lastErr = null;
+      for (const url of candidates) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 9000);
+          const resp = await fetch(url, {
+            cache: "no-store",
+            mode: "cors",
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const text = await resp.text();
+          const json = JSON.parse(text);
+          const parsed = parseUsgsReadings(json);
+          if (parsed.length > 0) return parsed;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error("All USGS endpoints failed");
+    }
+
+    // True when the fallback for this station/window is generated rather than cached readings
+    function isBaselineSynthetic(stationId, days) {
+      return stationId !== BASELINE_STATION_ID || days > BASELINE_MAX_DAYS;
+    }
+
+    // Shift a whole series by the station offset, then lift it as a block so its minimum is >= floor.
+    // (Clamping each point separately flattened deep-offset stations into a constant line.)
+    function offsetSeriesPreservingShape(values, offset, floor = 1.5) {
+      const shifted = values.map((v) => v + offset);
+      const min = Math.min(...shifted);
+      const lift = min < floor ? floor - min : 0;
+      return shifted.map((v) => Number((v + lift).toFixed(2)));
+    }
+
+    // Build smooth fallback baseline readings for any station & window length
+    function getBaselineReadingsForStation(stationId, days = currentPeriodDays) {
+      const offset = stationId === BASELINE_STATION_ID ? 0 : (STATIONS[stationId]?.ianCrestOffsetFt || 0);
+      const values = offsetSeriesPreservingShape(baselineRawReadings.map(([, val]) => val), offset);
+      const basePts = baselineRawReadings.map(([tsStr], i) => {
+        const ms = Date.parse(tsStr.replace(" ", "T") + ":00-05:00");
+        return {
+          ms,
+          timestamp: formatEstTimestamp(ms),
+          value: values[i]
+        };
+      });
+
+      if (basePts.length === 0) return basePts;
+
+      const endMs = basePts[basePts.length - 1].ms;
+      const targetStartMs = endMs - days * 86400000;
+
+      // Slice to exact requested window when days <= 2
+      if (days <= 2) {
+        return basePts.filter((p) => p.ms >= targetStartMs);
+      }
+
+      const firstBase = basePts[0];
+      const stepMs = days > 30 ? 6 * 3600000 : 3600000;
+      const prefix = [];
+      const baseLevel = Math.max(1.5, firstBase.value - 3.2);
+
+      for (let t = targetStartMs; t < firstBase.ms; t += stepMs) {
+        const progress = (t - targetStartMs) / Math.max(1, firstBase.ms - targetStartMs);
+        const smoothRise = baseLevel + (firstBase.value - baseLevel) * Math.pow(progress, 3);
+        const gentleWave = Math.sin(progress * Math.PI * 6) * 0.25 * (1 - progress);
+        prefix.push({
+          ms: t,
+          timestamp: formatEstTimestamp(t),
+          value: Number(Math.max(1.0, smoothRise + gentleWave).toFixed(2))
+        });
+      }
+      return prefix.concat(basePts);
+    }
+
+    // Generate modeled Hurricane Ian 2022 flood hydrograph fallback when offline
+    // Covers the shifted window [startMs - 1d, startMs + days + 1d] so day/hour shifts never run off the curve
+    function generateFallbackIanReadings(stationId, days = currentPeriodDays, startMs = ianStartMs) {
+      const offset = STATIONS[stationId]?.ianCrestOffsetFt || 0;
+      const startOffsetH = (startMs - IAN_BASE_ANCHOR_MS) / 3600000;
+      const fromHours = Math.min(0, Math.floor(startOffsetH - 24));
+      const totalHours = Math.max(72, Math.ceil(startOffsetH + (days + 2) * 24));
+      const stepMs = days > 30 ? 3600000 : 15 * 60000;
+      const readings = [];
+      const stages = [];
+
+      for (let h = fromHours; h <= totalHours; h += stepMs / 3600000) {
+        const ms = IAN_BASE_ANCHOR_MS + h * 3600000;
+        let stage = 15.8;
+        if (h < 0) {
+          stage = 15.8; // pre-storm baseline
+        } else if (h < 18) {
+          stage = 15.8 + (h / 18) * 1.4;
+        } else if (h < 54) {
+          const p = (h - 18) / 36;
+          stage = 17.2 + 13.4 * (1 - Math.cos(p * Math.PI)) * 0.5;
+        } else if (h < 240) {
+          const decay = (h - 54) / 186;
+          stage = 16.0 + 14.6 * Math.exp(-decay * 2.6);
+        } else {
+          stage = 15.6 + Math.sin(h / 72) * 0.35;
+        }
+        readings.push({ ms, timestamp: formatEstTimestamp(ms), value: 0 });
+        stages.push(stage);
+      }
+      const values = offsetSeriesPreservingShape(stages, offset);
+      readings.forEach((r, i) => { r.value = values[i]; });
+      return readings;
+    }
+
+    // Process raw readings into rate deltas (in/hr & ft/hr) and N-hour moving averages
+    function computeTelemetrySeries(rawReadings) {
+      const result = [];
+      for (let i = 0; i < rawReadings.length; i++) {
+        const curr = rawReadings[i];
+        const prev = i > 0 ? rawReadings[i - 1] : null;
+        let rateInHr = null;
+        let rateFtHr = null;
+
+        if (prev) {
+          const dtHours = Math.max(1 / 60, (curr.ms - prev.ms) / 3600000);
+          const diffFt = curr.value - prev.value;
+          rateFtHr = Number((diffFt / dtHours).toFixed(4));
+          rateInHr = Number(((diffFt * 12) / dtHours).toFixed(3));
+        }
+
+        result.push({
+          ms: curr.ms,
+          timestamp: curr.timestamp,
+          value: curr.value,
+          rateInHr,
+          rateFtHr,
+          movAvgInHr: null,
+          movAvgFtHr: null
+        });
+      }
+
+      applyMovingAverage(result);
+      return result;
+    }
+
+    // N-hour trailing moving average of the rate (N = movingAvgHours; 1h = 4 readings of 15 min)
+    function applyMovingAverage(result) {
+      const windowMs = Math.max(1, movingAvgHours) * 3600000;
+      for (let i = 0; i < result.length; i++) {
+        result[i].movAvgInHr = null;
+        result[i].movAvgFtHr = null;
+        if (result[i].rateFtHr === null) continue;
+        const windowSlice = [];
+        for (let j = i; j >= 1 && result[j].ms > result[i].ms - windowMs; j--) {
+          if (result[j].rateFtHr !== null) windowSlice.push(result[j]);
+        }
+        if (windowSlice.length > 0) {
+          const sumInHr = windowSlice.reduce((acc, r) => acc + r.rateInHr, 0);
+          const sumFtHr = windowSlice.reduce((acc, r) => acc + r.rateFtHr, 0);
+          result[i].movAvgInHr = Number((sumInHr / windowSlice.length).toFixed(3));
+          result[i].movAvgFtHr = Number((sumFtHr / windowSlice.length).toFixed(4));
+        }
+      }
+    }
+
+    // Align Hurricane Ian historical readings by elapsed time onto processedData
+    function alignHurricaneIanSeries() {
+      const n = processedData.length;
+      alignedIanLevels = new Array(n).fill(null);
+      alignedIanTimestamps = new Array(n).fill(null);
+      alignedIanRatesInHr = new Array(n).fill(null);
+      alignedIanRatesFtHr = new Array(n).fill(null);
+      alignedIanMovAvgInHr = new Array(n).fill(null);
+      alignedIanMovAvgFtHr = new Array(n).fill(null);
+
+      if (!showHurricaneIan || n === 0) return;
+      const rawIan = ianReadingsCache[currentStationId] || [];
+      if (rawIan.length === 0) return;
+
+      const ianSeries = computeTelemetrySeries(rawIan);
+      const baseMs = processedData[0].ms;
+
+      // Two-pointer linear match within adaptive tolerance (up to 2h for 365d coarse points)
+      const maxToleranceMs = Math.max(30 * 60000, (n > 1 ? (processedData[n - 1].ms - baseMs) / n : 15 * 60000) * 1.5);
+      let ptr = 0;
+      for (let i = 0; i < n; i++) {
+        const elapsedMs = processedData[i].ms - baseMs;
+        const targetIanMs = ianStartMs + elapsedMs;
+
+        while (ptr < ianSeries.length - 1 && ianSeries[ptr + 1].ms <= targetIanMs) {
+          ptr++;
+        }
+
+        let best = ianSeries[ptr];
+        if (ptr + 1 < ianSeries.length) {
+          const next = ianSeries[ptr + 1];
+          if (Math.abs(next.ms - targetIanMs) < Math.abs(best.ms - targetIanMs)) {
+            best = next;
+          }
+        }
+
+        if (best && Math.abs(best.ms - targetIanMs) <= maxToleranceMs) {
+          alignedIanLevels[i] = best.value;
+          alignedIanTimestamps[i] = best.timestamp;
+          alignedIanRatesInHr[i] = best.rateInHr;
+          alignedIanRatesFtHr[i] = best.rateFtHr;
+          alignedIanMovAvgInHr[i] = best.movAvgInHr;
+          alignedIanMovAvgFtHr[i] = best.movAvgFtHr;
+        }
+      }
+    }
+
+    // Fetch live USGS gage heights (uses Daily Values 'dv' for 30d/365d so full year loads fast)
+    async function fetchLiveUsgsData(isManual = false) {
+      // Snapshot the request parameters so a slow response can't be applied to a different station/window
+      const reqId = ++liveRequestSeq;
+      const stationId = currentStationId;
+      const period = currentPeriod;
+      const periodDays = currentPeriodDays;
+
+      const refreshIcon = document.getElementById("refreshIcon");
+      const statusDot = document.getElementById("liveStatusDot");
+      const statusText = document.getElementById("liveStatusText");
+      const statusBadge = document.getElementById("liveStatusBadge");
+      const fallbackBanner = document.getElementById("fallbackBanner");
+
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      let readings = [];
+      let fetchErr = null;
+      try {
+        if (periodDays > 7) {
+          // Query USGS Daily Values (mean gage height, statCd=00003) for multi-month / 365d views
+          const endDateStr = new Date().toISOString().slice(0, 10);
+          const startDateStr = new Date(Date.now() - periodDays * 86400000).toISOString().slice(0, 10);
+          const dvUrl = `https://waterservices.usgs.gov/nwis/dv/?format=json&sites=${stationId}&startDT=${startDateStr}&endDT=${endDateStr}&parameterCd=${USGS_PARAM}&statCd=00003&siteStatus=all`;
+          const ogcDvUrl = `https://api.waterdata.usgs.gov/ogcapi/v0/collections/daily/items?f=json&monitoring_location_id=USGS-${stationId}&parameter_code=${USGS_PARAM}&statistic_id=00003&time=${startDateStr}/${endDateStr}&limit=1000`;
+          readings = await fetchUsgsJsonWithFallback(dvUrl, ogcDvUrl);
+
+          // Append latest 2 days of 15-minute instantaneous readings for up-to-the-minute tail
+          try {
+            const ivUrl = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${stationId}&period=P2D&parameterCd=${USGS_PARAM}&siteStatus=all`;
+            const recentIv = await fetchUsgsJsonWithFallback(ivUrl);
+            if (recentIv.length > 0) {
+              const cutoffMs = recentIv[0].ms;
+              readings = readings.filter((r) => r.ms < cutoffMs).concat(recentIv);
+            }
+          } catch (_) {}
+        } else {
+          const startIso = new Date(Date.now() - periodDays * 86400000).toISOString();
+          const endIso = new Date().toISOString();
+          const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${stationId}&period=${period}&parameterCd=${USGS_PARAM}&siteStatus=all`;
+          const ogcIvUrl = `https://api.waterdata.usgs.gov/ogcapi/v0/collections/continuous/items?f=json&monitoring_location_id=USGS-${stationId}&parameter_code=${USGS_PARAM}&time=${encodeURIComponent(startIso + "/" + endIso)}&limit=5000`;
+          readings = await fetchUsgsJsonWithFallback(url, ogcIvUrl);
+        }
+
+        if (readings.length === 0) {
+          throw new Error("No gage height values returned for this period");
+        }
+      } catch (err) {
+        fetchErr = err;
+      }
+
+      // A newer request (station/window change or refresh) was started while this one was in flight
+      if (reqId !== liveRequestSeq) return;
+
+      if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+
+      if (!fetchErr) {
+        processedData = computeTelemetrySeries(readings);
+        isLiveConnected = true;
+        dataSource = "live";
+
+        if (fallbackBanner) fallbackBanner.classList.add("hidden");
+        if (statusBadge) {
+          statusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80";
+        }
+        if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        if (statusText) statusText.textContent = `Live USGS • ${readings.length} pts`;
+
+        if (isManual) showToast(`Synced ${readings.length} readings for USGS ${stationId}`);
+      } else {
+        console.warn("Live USGS fetch failed, using fallback data:", fetchErr);
+        isLiveConnected = false;
+        const synthetic = isBaselineSynthetic(stationId, periodDays);
+        dataSource = synthetic ? "simulated" : "cached";
+        processedData = computeTelemetrySeries(getBaselineReadingsForStation(stationId, periodDays));
+
+        const lastTs = processedData.length > 0 ? processedData[processedData.length - 1].timestamp : "--";
+        const whatShown = synthetic
+          ? "showing SIMULATED illustrative data — these are NOT real readings for this station"
+          : `showing a cached snapshot of USGS ${BASELINE_STATION_ID} readings ending ${lastTs} EST`;
+        const reason = fetchErr?.message || "NetworkError";
+        const fallbackMsg = document.getElementById("fallbackMessage");
+        if (fallbackMsg) {
+          const isFileProto = window.location.protocol === "file:";
+          fallbackMsg.textContent = isFileProto
+            ? `Browser blocked cross-origin USGS request from local file:// (${reason}) — ${whatShown}. Tip: run a local server (e.g. python -m http.server) or allow CORS.`
+            : `Live USGS API unreachable (${reason}) — ${whatShown}.`;
+        }
+        if (fallbackBanner) fallbackBanner.classList.remove("hidden");
+        if (statusBadge) {
+          statusBadge.className = synthetic
+            ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200"
+            : "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200";
+        }
+        if (statusDot) statusDot.className = synthetic ? "w-2 h-2 rounded-full bg-rose-500" : "w-2 h-2 rounded-full bg-amber-500";
+        if (statusText) statusText.textContent = synthetic ? `SIMULATED (${periodDays}d)` : `Cached snapshot (${periodDays}d)`;
+      }
+
+      if (showHurricaneIan) {
+        await fetchHurricaneIanData();
+      } else {
+        alignHurricaneIanSeries();
+        refreshAllViews();
+      }
+    }
+
+    // Fetch historical Hurricane Ian readings covering the full active period window
+    async function fetchHurricaneIanData() {
+      const spinner = document.getElementById("ianLoadingSpinner");
+      if (!showHurricaneIan) {
+        alignHurricaneIanSeries();
+        refreshAllViews();
+        return;
+      }
+
+      // Snapshot parameters; the user may switch station/window/shift while the request is in flight
+      const stationId = currentStationId;
+      const periodDays = currentPeriodDays;
+      const startMs = ianStartMs;
+      const requiredStartMs = startMs - 86400000;
+      const requiredEndMs = startMs + periodDays * 86400000 + 86400000;
+      const cached = ianReadingsCache[stationId];
+      const meta = ianCacheMeta[stationId];
+
+      // Refetch when the cached readings don't span the (shifted) Ian window on either side
+      const coverageShort = !cached || cached.length === 0
+        || cached[0].ms > startMs
+        || cached[cached.length - 1].ms < requiredEndMs - 86400000;
+      // Modeled data is only a stand-in after a failed fetch — keep trying for the real readings
+      const retryModeled = meta?.source === "modeled" && Date.now() - meta.attemptedAt > IAN_RETRY_COOLDOWN_MS;
+
+      if (coverageShort || retryModeled) {
+        const myReq = (ianRequestSeq[stationId] = (ianRequestSeq[stationId] || 0) + 1);
+        ianPendingCount++;
+        if (spinner) spinner.classList.remove("hidden");
+
+        let result = null;
+        let source = "modeled";
+        try {
+          const endWindowMs = Math.max(requiredEndMs, Date.parse("2022-10-12T05:00:00Z"));
+          const startIso = new Date(Math.min(requiredStartMs, Date.parse("2022-09-25T05:00:00Z"))).toISOString();
+          const endIso = new Date(endWindowMs).toISOString();
+          const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&sites=${stationId}&startDT=${encodeURIComponent(startIso)}&endDT=${encodeURIComponent(endIso)}&parameterCd=${USGS_PARAM}&siteStatus=all`;
+          const ogcUrl = `https://api.waterdata.usgs.gov/ogcapi/v0/collections/continuous/items?f=json&monitoring_location_id=USGS-${stationId}&parameter_code=${USGS_PARAM}&time=${encodeURIComponent(startIso + "/" + endIso)}&limit=5000`;
+          let parsed = await fetchUsgsJsonWithFallback(url, ogcUrl);
+          if (parsed.length > 3500) {
+            const step = Math.ceil(parsed.length / 2500);
+            parsed = parsed.filter((_, idx) => idx % step === 0 || idx === parsed.length - 1);
+          }
+          if (parsed.length > 0) {
+            result = parsed;
+            source = "live";
+          }
+        } catch (err) {
+          console.warn("Hurricane Ian historical fetch failed, using modeled curve:", err);
+        } finally {
+          ianPendingCount--;
+          if (spinner && ianPendingCount === 0) spinner.classList.add("hidden");
+        }
+
+        // A newer Ian request for this station superseded this one; it will render
+        if (ianRequestSeq[stationId] !== myReq) return;
+
+        // Never replace real readings with a modeled curve just because a refetch failed
+        const hadLive = ianCacheMeta[stationId]?.source === "live";
+        if (source === "live" || !hadLive) {
+          ianReadingsCache[stationId] = result || generateFallbackIanReadings(stationId, periodDays, startMs);
+          ianCacheMeta[stationId] = { source, attemptedAt: Date.now() };
+        }
+      }
+
+      // Data was stored under its own station; only draw it if that station is still selected
+      if (stationId !== currentStationId) return;
+      alignHurricaneIanSeries();
+      refreshAllViews();
+    }
+
+    // Update KPI cards
+    function updateKPIs() {
+      if (processedData.length === 0) return;
+
+      const latest = processedData[processedData.length - 1];
+      const first = processedData[0];
+      const netDelta = latest.value - first.value;
+
+      let minVal = Infinity;
+      let maxVal = -Infinity;
+      let peakRateObj = null;
+
+      for (const row of processedData) {
+        if (row.value < minVal) minVal = row.value;
+        if (row.value > maxVal) maxVal = row.value;
+        const rVal = rateUnit === "in_hr" ? row.rateInHr : row.rateFtHr;
+        if (rVal !== null && (peakRateObj === null || rVal > (rateUnit === "in_hr" ? peakRateObj.rateInHr : peakRateObj.rateFtHr))) {
+          peakRateObj = row;
+        }
+      }
+
+      document.getElementById("kpiLatestLevel").textContent = latest.value.toFixed(2);
+      document.getElementById("kpiLatestTime").textContent = `As of ${latest.timestamp} EST`;
+
+      const netSign = netDelta >= 0 ? "+" : "";
+      document.getElementById("kpiNetChange").textContent = `${netSign}${netDelta.toFixed(2)}`;
+      document.getElementById("kpiWindowRange").textContent = `Min ${minVal.toFixed(2)} ft • Max ${maxVal.toFixed(2)} ft`;
+
+      const netBadge = document.getElementById("kpiNetBadge");
+      if (netDelta > 0.05) {
+        netBadge.textContent = "Rising";
+        netBadge.className = "px-2 py-0.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700";
+      } else if (netDelta < -0.05) {
+        netBadge.textContent = "Receding";
+        netBadge.className = "px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700";
+      } else {
+        netBadge.textContent = "Steady";
+        netBadge.className = "px-2 py-0.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700";
+      }
+
+      const isInHr = rateUnit === "in_hr";
+      const unitLabel = isInHr ? "in/hr" : "ft/hr";
+      document.getElementById("kpiRateUnitBadge").textContent = isInHr ? "in / hr" : "ft / hr";
+      document.getElementById("kpiRateUnitText").textContent = unitLabel;
+      document.getElementById("kpiPeakRateUnit").textContent = unitLabel;
+
+      const currRate = isInHr ? latest.rateInHr : latest.rateFtHr;
+      document.getElementById("kpiCurrentRate").textContent = currRate !== null
+        ? `${currRate >= 0 ? "+" : ""}${currRate.toFixed(isInHr ? 2 : 3)}`
+        : "--.--";
+
+      const spanHours = Math.max(0.25, (latest.ms - first.ms) / 3600000);
+      const avgHrRate = isInHr ? (netDelta * 12) / spanHours : netDelta / spanHours;
+      document.getElementById("kpiAvgRate").textContent = `Window avg: ${avgHrRate >= 0 ? "+" : ""}${avgHrRate.toFixed(isInHr ? 2 : 3)} ${unitLabel}`;
+
+      if (peakRateObj) {
+        const pk = isInHr ? peakRateObj.rateInHr : peakRateObj.rateFtHr;
+        document.getElementById("kpiPeakRate").textContent = `${pk >= 0 ? "+" : ""}${pk.toFixed(isInHr ? 2 : 3)}`;
+        document.getElementById("kpiPeakRateTime").textContent = `Occurred ${peakRateObj.timestamp} EST`;
+      }
+
+      // Hurricane Ian Window Peak badge
+      const ianBadge = document.getElementById("kpiIanPeakBadge");
+      const validIan = alignedIanLevels.filter((v) => v !== null);
+      if (showHurricaneIan && validIan.length > 0) {
+        const ianPeak = Math.max(...validIan);
+        ianBadge.textContent = `Ian Peak: ${ianPeak.toFixed(2)} ft`;
+        ianBadge.classList.remove("hidden");
+      } else {
+        ianBadge.classList.add("hidden");
+      }
+    }
+
+    // Reflect series visibility state in the toggle checkboxes
+    function syncSeriesToggles() {
+      document.querySelectorAll("#seriesToggleGroup input[data-series]").forEach((input) => {
+        input.checked = !!visibleSeries[input.dataset.series];
+      });
+    }
+
+    // Render or update the dual-axis Chart.js visualization
+    function renderChart() {
+      const canvas = document.getElementById("waterLevelChart");
+      if (!canvas) return;
+
+      if (typeof window.Chart === "undefined") {
+        setTimeout(renderChart, 150);
+        return;
+      }
+
+      const ctx = canvas.getContext("2d");
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      const isInHr = rateUnit === "in_hr";
+      const labels = processedData.map((d) => formatEstLabelShort(d.ms));
+      const levelValues = processedData.map((d) => d.value);
+      const rawRateValues = processedData.map((d) => (isInHr ? d.rateInHr : d.rateFtHr));
+      const movAvgValues = processedData.map((d) => (isInHr ? d.movAvgInHr : d.movAvgFtHr));
+      const ianRateValues = showMovingAvg
+        ? (isInHr ? alignedIanMovAvgInHr : alignedIanMovAvgFtHr)
+        : (isInHr ? alignedIanRatesInHr : alignedIanRatesFtHr);
+
+      const denseDataset = processedData.length > 400;
+      const pointRadius = denseDataset ? 0 : 2;
+      const unitSuffix = isInHr ? "in/hr" : "ft/hr";
+
+      const levelLabelSuffix = dataSource === "simulated" ? " — SIMULATED" : dataSource === "cached" ? " — cached snapshot" : "";
+      const ianIsModeled = ianCacheMeta[currentStationId]?.source !== "live";
+
+      syncSeriesToggles();
+
+      const datasets = [];
+
+      if (visibleSeries.level) {
+        datasets.push({
+          label: `Gage Height (ft)${levelLabelSuffix}`,
+          data: levelValues,
+          yAxisID: "yLevel",
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.10)",
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.25,
+          pointRadius,
+          pointHoverRadius: 5,
+          order: 2
+        });
+      }
+
+      if (visibleSeries.ianLevel && showHurricaneIan && alignedIanLevels.some((v) => v !== null)) {
+        datasets.push({
+          label: ianIsModeled ? "Hurricane Ian 2022 — MODELED, not real (ft)" : "Hurricane Ian 2022 (ft)",
+          data: alignedIanLevels,
+          yAxisID: "yLevel",
+          borderColor: "#e11d48",
+          backgroundColor: "transparent",
+          borderWidth: 2,
+          borderDash: [6, 4],
+          fill: false,
+          tension: 0.25,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          spanGaps: true,
+          order: 1
+        });
+      }
+
+      if (!visibleSeries.rate) {
+        // Rate series hidden by user toggle
+      } else if (showMovingAvg) {
+        datasets.push({
+          label: `Rate ${movingAvgHours}h Avg (${unitSuffix})`,
+          data: movAvgValues,
+          yAxisID: "yRate",
+          borderColor: "#d97706",
+          backgroundColor: "rgba(217, 119, 6, 0.12)",
+          borderWidth: 2.2,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          spanGaps: true,
+          order: 3
+        });
+        datasets.push({
+          label: "Raw Interval Rate",
+          data: rawRateValues,
+          yAxisID: "yRate",
+          borderColor: "rgba(245, 158, 11, 0.32)",
+          backgroundColor: "transparent",
+          borderWidth: 1,
+          borderDash: [3, 3],
+          fill: false,
+          tension: 0.15,
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          spanGaps: true,
+          order: 4
+        });
+      } else {
+        datasets.push({
+          label: `Rate Increase (${unitSuffix})`,
+          data: rawRateValues,
+          yAxisID: "yRate",
+          borderColor: "#d97706",
+          backgroundColor: "rgba(217, 119, 6, 0.12)",
+          borderWidth: 2,
+          fill: false,
+          tension: 0.2,
+          pointRadius,
+          pointHoverRadius: 5,
+          spanGaps: true,
+          order: 3
+        });
+      }
+
+      if (visibleSeries.ianRate && showHurricaneIan && ianRateValues.some((v) => v !== null)) {
+        datasets.push({
+          label: ianIsModeled ? `Ian Rate — MODELED (${unitSuffix})` : `Ian Rate (${unitSuffix})`,
+          data: ianRateValues,
+          yAxisID: "yRate",
+          borderColor: "#9333ea",
+          backgroundColor: "transparent",
+          borderWidth: 1.75,
+          borderDash: [4, 4],
+          fill: false,
+          tension: 0.25,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          spanGaps: true,
+          order: 5
+        });
+      }
+
+      const hasLevelAxis = datasets.some((ds) => ds.yAxisID === "yLevel");
+      const hasRateAxis = datasets.some((ds) => ds.yAxisID === "yRate");
+
+      chartInstance = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: denseDataset ? false : { duration: 250 },
+          interaction: {
+            mode: "index",
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              align: "start",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                font: { family: "Inter", size: 12, weight: "600" },
+                filter: (item) => item.text !== "Raw Interval Rate"
+              }
+            },
+            tooltip: {
+              backgroundColor: "rgba(15, 23, 42, 0.94)",
+              titleFont: { family: "Inter", size: 12, weight: "700" },
+              bodyFont: { family: "Inter", size: 12 },
+              padding: 12,
+              cornerRadius: 12,
+              filter: (item) => item && item.dataset && item.dataset.label !== "Raw Interval Rate",
+              callbacks: {
+                title: (items) => {
+                  if (!items || items.length === 0) return "";
+                  const idx = items[0].dataIndex;
+                  const row = processedData[idx];
+                  if (!row) return "";
+                  const ianTs = showHurricaneIan && alignedIanTimestamps[idx] ? `  |  Ian: ${alignedIanTimestamps[idx]} EST` : "";
+                  return `${row.timestamp} EST${ianTs}`;
+                },
+                label: (item) => {
+                  if (!item || !item.dataset) return "";
+                  const val = item.parsed?.y;
+                  if (val === null || val === undefined || Number.isNaN(val)) return "";
+                  const isLevel = item.dataset.yAxisID === "yLevel";
+                  const decimals = isLevel ? 2 : (isInHr ? 2 : 3);
+                  const formatted = isLevel ? `${val.toFixed(2)} ft` : `${val >= 0 ? "+" : ""}${val.toFixed(decimals)} ${unitSuffix}`;
+                  return ` ${item.dataset.label}: ${formatted}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                maxTicksLimit: 10,
+                font: { family: "Inter", size: 11 },
+                color: "#64748b"
+              }
+            },
+            yLevel: {
+              type: "linear",
+              position: "left",
+              display: hasLevelAxis || !hasRateAxis,
+              title: {
+                display: true,
+                text: "Gage Height (ft)",
+                color: "#1d4ed8",
+                font: { family: "Inter", size: 12, weight: "700" }
+              },
+              ticks: {
+                color: "#1d4ed8",
+                font: { family: "Inter", size: 11, weight: "600" },
+                callback: (v) => `${Number(v).toFixed(1)} ft`
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.16)"
+              }
+            },
+            yRate: {
+              type: "linear",
+              position: "right",
+              display: hasRateAxis,
+              title: {
+                display: true,
+                text: `Rate of Change (${unitSuffix})`,
+                color: "#b45309",
+                font: { family: "Inter", size: 12, weight: "700" }
+              },
+              ticks: {
+                color: "#b45309",
+                font: { family: "Inter", size: 11, weight: "600" },
+                callback: (v) => `${v > 0 ? "+" : ""}${Number(v).toFixed(isInHr ? 1 : 2)}`
+              },
+              grid: {
+                drawOnChartArea: true,
+                color: (ctxTick) => (ctxTick.tick && ctxTick.tick.value === 0 ? "rgba(100, 116, 139, 0.55)" : "transparent"),
+                borderDash: [4, 4]
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Populate Date Filter options and render the Telemetry Log table
+    function populateDateFilter() {
+      const select = document.getElementById("dateFilterSelect");
+      if (!select) return;
+      const prevVal = select.value;
+      const dates = Array.from(new Set(processedData.map((d) => d.timestamp.slice(0, 10)))).reverse();
+      select.innerHTML = `<option value="ALL">All Dates (${dates.length})</option>` +
+        dates.map((dt) => `<option value="${dt}">${dt}</option>`).join("");
+      if (dates.includes(prevVal)) select.value = prevVal;
+    }
+
+    function renderTelemetryTable() {
+      const tbody = document.getElementById("telemetryTableBody");
+      const sourceLabel = document.getElementById("tableSourceLabel");
+      if (!tbody) return;
+
+      const dateFilter = document.getElementById("dateFilterSelect")?.value || "ALL";
+      const trendFilter = document.getElementById("trendFilterSelect")?.value || "ALL";
+      const station = STATIONS[currentStationId];
+
+      if (sourceLabel) {
+        const srcText = dataSource === "live"
+          ? "Live USGS readings"
+          : dataSource === "cached" ? "Cached snapshot (live data unavailable)" : "SIMULATED data — not real readings";
+        const ianText = showHurricaneIan
+          ? (ianCacheMeta[currentStationId]?.source === "live" ? " • Ian: real 2022 readings" : " • Ian: MODELED curve, not real")
+          : "";
+        sourceLabel.textContent = `${station.dropdownLabel} • ${srcText}${ianText} • Times in EST`;
+      }
+
+      const rows = [];
+      const isInHr = rateUnit === "in_hr";
+      for (let i = processedData.length - 1; i >= 0; i--) {
+        const d = processedData[i];
+        if (dateFilter !== "ALL" && !d.timestamp.startsWith(dateFilter)) continue;
+
+        const rInHr = d.rateInHr;
+        let trendKey = "STEADY";
+        if (rInHr !== null) {
+          if (rInHr >= 4.8) trendKey = "RAPID";
+          else if (rInHr > 0.05) trendKey = "RISING";
+          else if (rInHr < -0.05) trendKey = "FALLING";
+        }
+
+        if (trendFilter !== "ALL" && trendKey !== trendFilter) continue;
+
+        let badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">Steady</span>`;
+        if (trendKey === "RAPID") {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-700">Rapid Rise</span>`;
+        } else if (trendKey === "RISING") {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">Rising</span>`;
+        } else if (trendKey === "FALLING") {
+          badgeHtml = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">Falling</span>`;
+        }
+
+        const ianLvl = showHurricaneIan && alignedIanLevels[i] !== null ? alignedIanLevels[i].toFixed(2) : "—";
+        const ianRawRate = showHurricaneIan
+          ? (isInHr ? alignedIanRatesInHr[i] : alignedIanRatesFtHr[i])
+          : null;
+        const ianRateStr = ianRawRate !== null && ianRawRate !== undefined
+          ? `${ianRawRate >= 0 ? "+" : ""}${ianRawRate.toFixed(isInHr ? 2 : 3)}`
+          : "—";
+
+        const movVal = isInHr ? d.movAvgInHr : d.movAvgFtHr;
+
+        rows.push(`
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-2.5 px-4 font-mono text-xs text-slate-700 whitespace-nowrap">${d.timestamp} EST</td>
+            <td class="py-2.5 px-4 text-right font-semibold text-slate-900">${d.value.toFixed(2)}</td>
+            <td class="py-2.5 px-4 text-right font-mono text-xs ${rInHr > 0 ? "text-amber-700 font-semibold" : rInHr < 0 ? "text-emerald-700" : "text-slate-500"}">
+              ${rInHr !== null ? (rInHr >= 0 ? "+" : "") + rInHr.toFixed(2) : "—"}
+            </td>
+            <td class="py-2.5 px-4 text-right font-mono text-xs text-slate-600">
+              ${d.rateFtHr !== null ? (d.rateFtHr >= 0 ? "+" : "") + d.rateFtHr.toFixed(3) : "—"}
+            </td>
+            <td class="py-2.5 px-4 text-right font-mono text-xs text-slate-600">
+              ${movVal !== null ? (movVal >= 0 ? "+" : "") + movVal.toFixed(isInHr ? 2 : 3) : "—"}
+            </td>
+            <td class="py-2.5 px-4 text-right font-mono text-xs text-rose-700 font-medium">${ianLvl}</td>
+            <td class="py-2.5 px-4 text-right font-mono text-xs text-purple-700">${ianRateStr}</td>
+            <td class="py-2.5 px-4 text-center">${badgeHtml}</td>
+          </tr>
+        `);
+
+        if (rows.length >= 300) break;
+      }
+
+      tbody.innerHTML = rows.length > 0
+        ? rows.join("")
+        : `<tr><td colspan="8" class="py-8 text-center text-xs text-slate-400">No readings match the selected filters.</td></tr>`;
+    }
+
+    function refreshAllViews() {
+      updateKPIs();
+      renderChart();
+      populateDateFilter();
+      renderTelemetryTable();
+    }
+
+    // Export current dataset + Hurricane Ian comparison to CSV
+    function exportToCsv() {
+      if (processedData.length === 0) return;
+      const headers = [
+        "station_id",
+        "timestamp_est",
+        "gage_height_ft",
+        "rate_in_per_hr",
+        "rate_ft_per_hr",
+        `moving_avg_${movingAvgHours}h_in_per_hr`,
+        `moving_avg_${movingAvgHours}h_ft_per_hr`,
+        "hurricane_ian_timestamp_est",
+        "hurricane_ian_gage_height_ft",
+        "hurricane_ian_rate_in_per_hr",
+        "hurricane_ian_rate_ft_per_hr",
+        "data_source",
+        "hurricane_ian_data_source"
+      ];
+
+      const ianSource = showHurricaneIan ? (ianCacheMeta[currentStationId]?.source === "live" ? "live" : "modeled") : "";
+      const lines = [headers.join(",")];
+      processedData.forEach((row, idx) => {
+        const hasIan = alignedIanLevels[idx] !== null;
+        lines.push([
+          currentStationId,
+          `"${row.timestamp} EST"`,
+          row.value.toFixed(2),
+          row.rateInHr !== null ? row.rateInHr.toFixed(3) : "",
+          row.rateFtHr !== null ? row.rateFtHr.toFixed(4) : "",
+          row.movAvgInHr !== null ? row.movAvgInHr.toFixed(3) : "",
+          row.movAvgFtHr !== null ? row.movAvgFtHr.toFixed(4) : "",
+          alignedIanTimestamps[idx] ? `"${alignedIanTimestamps[idx]} EST"` : "",
+          alignedIanLevels[idx] !== null ? alignedIanLevels[idx].toFixed(2) : "",
+          alignedIanRatesInHr[idx] !== null ? alignedIanRatesInHr[idx].toFixed(3) : "",
+          alignedIanRatesFtHr[idx] !== null ? alignedIanRatesFtHr[idx].toFixed(4) : "",
+          dataSource,
+          hasIan ? ianSource : ""
+        ].join(","));
+      });
+
+      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `usgs_${currentStationId}_water_level_${currentPeriod.toLowerCase()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Exported ${processedData.length} rows to CSV`);
+    }
+
+    // 5-Minute Auto-Refresh Countdown Timer
+    function startCountdownTimer() {
+      clearInterval(countdownIntervalId);
+      countdownIntervalId = setInterval(() => {
+        if (!autoRefreshEnabled) return;
+        countdownRemaining--;
+        if (countdownRemaining <= 0) {
+          countdownRemaining = REFRESH_INTERVAL_SEC;
+          fetchLiveUsgsData(false);
+        }
+        const mins = String(Math.floor(countdownRemaining / 60)).padStart(2, "0");
+        const secs = String(countdownRemaining % 60).padStart(2, "0");
+        const timerEl = document.getElementById("countdownTimer");
+        if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function updateStationMetadataUI() {
+      const station = STATIONS[currentStationId];
+      if (!station) return;
+      document.title = `USGS ${station.id} • ${station.name} Water Level & Rate Dashboard`;
+      const subtitle = document.getElementById("headerSubtitle");
+      if (subtitle) subtitle.textContent = `${station.name} • Parameter 00065 (Gage Height, ft)`;
+      const mapLink = document.getElementById("stationMapLink");
+      if (mapLink) mapLink.href = station.mapUrl;
+      const usgsLink = document.getElementById("stationUsgsLink");
+      if (usgsLink) usgsLink.href = station.usgsUrl;
+    }
+
+    function updateIanHeaderLabels() {
+      const label = document.getElementById("ianStartLabel");
+      if (label) label.textContent = formatIanHeaderDate(ianStartMs);
+    }
+
+    // Wire up all interactive DOM event listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      updateStationMetadataUI();
+      updateIanHeaderLabels();
+
+      // Station dropdown change
+      document.getElementById("stationSelect")?.addEventListener("change", (e) => {
+        currentStationId = e.target.value;
+        updateStationMetadataUI();
+        countdownRemaining = REFRESH_INTERVAL_SEC;
+        fetchLiveUsgsData(true);
+      });
+
+      // Period selector buttons (1d, 2d, 3d, 7d, 30d, 365d)
+      document.querySelectorAll(".period-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".period-btn").forEach((b) => {
+            b.className = "period-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer";
+          });
+          btn.className = "period-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-sm transition cursor-pointer";
+          currentPeriod = btn.dataset.period;
+          currentPeriodDays = parseInt(btn.dataset.days, 10) || 2;
+          countdownRemaining = REFRESH_INTERVAL_SEC;
+          fetchLiveUsgsData(false);
+        });
+      });
+
+      // Rate unit toggle buttons (in/hr vs ft/hr)
+      const unitInHrBtn = document.getElementById("unitInHrBtn");
+      const unitHrBtn = document.getElementById("unitHrBtn");
+      unitInHrBtn?.addEventListener("click", () => {
+        rateUnit = "in_hr";
+        unitInHrBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-amber-700 shadow-sm transition cursor-pointer";
+        unitHrBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer";
+        refreshAllViews();
+      });
+      unitHrBtn?.addEventListener("click", () => {
+        rateUnit = "ft_hr";
+        unitHrBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-amber-700 shadow-sm transition cursor-pointer";
+        unitInHrBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer";
+        refreshAllViews();
+      });
+
+      // Moving average window dropdown (0 = off)
+      document.getElementById("movingAvgSelect")?.addEventListener("change", (e) => {
+        movingAvgHours = parseInt(e.target.value, 10) || 0;
+        showMovingAvg = movingAvgHours > 0;
+        const header = document.getElementById("movAvgHeader");
+        if (header) header.textContent = showMovingAvg ? `${movingAvgHours}h Moving Avg` : "Moving Avg (off)";
+        applyMovingAverage(processedData);
+        alignHurricaneIanSeries();
+        refreshAllViews();
+      });
+
+      // Per-series visibility toggles
+      document.querySelectorAll("#seriesToggleGroup input[data-series]").forEach((input) => {
+        input.addEventListener("change", (e) => {
+          visibleSeries[e.target.dataset.series] = e.target.checked;
+          // The Ian series toggles drive Hurricane Ian on/off (fetch, KPI, table)
+          const ianOn = visibleSeries.ianLevel || visibleSeries.ianRate;
+          if (ianOn !== showHurricaneIan) {
+            showHurricaneIan = ianOn;
+            fetchHurricaneIanData();
+          } else {
+            renderChart();
+          }
+        });
+      });
+
+      // Hurricane Ian shift buttons (shifting while Ian is off turns both Ian series on)
+      document.querySelectorAll(".ian-shift-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const shiftHrs = parseInt(btn.dataset.shiftHours, 10) || 0;
+          ianStartMs += shiftHrs * 3600000;
+          updateIanHeaderLabels();
+          if (!showHurricaneIan) {
+            showHurricaneIan = true;
+            visibleSeries.ianLevel = true;
+            visibleSeries.ianRate = true;
+            syncSeriesToggles();
+          }
+          fetchHurricaneIanData();
+        });
+      });
+
+      // Auto-refresh pause/resume, manual refresh, retry, and export
+      document.getElementById("toggleAutoRefreshBtn")?.addEventListener("click", (e) => {
+        autoRefreshEnabled = !autoRefreshEnabled;
+        e.target.textContent = autoRefreshEnabled ? "Pause" : "Resume";
+        showToast(autoRefreshEnabled ? "5-minute auto-refresh resumed" : "Auto-refresh paused");
+      });
+
+      document.getElementById("manualRefreshBtn")?.addEventListener("click", () => {
+        countdownRemaining = REFRESH_INTERVAL_SEC;
+        fetchLiveUsgsData(true);
+      });
+
+      document.getElementById("retryLiveBtn")?.addEventListener("click", () => {
+        countdownRemaining = REFRESH_INTERVAL_SEC;
+        fetchLiveUsgsData(true);
+      });
+
+      document.getElementById("exportCsvBtn")?.addEventListener("click", exportToCsv);
+
+      // Telemetry table filters
+      document.getElementById("dateFilterSelect")?.addEventListener("change", renderTelemetryTable);
+      document.getElementById("trendFilterSelect")?.addEventListener("change", renderTelemetryTable);
+
+      // Immediately render baseline dataset so chart is visible right away, then sync live USGS
+      // (No Ian pre-fill: a modeled curve in the cache used to block the real 2022 fetch.)
+      dataSource = isBaselineSynthetic(currentStationId, currentPeriodDays) ? "simulated" : "cached";
+      processedData = computeTelemetrySeries(getBaselineReadingsForStation(currentStationId, currentPeriodDays));
+      alignHurricaneIanSeries();
+      refreshAllViews();
+
+      startCountdownTimer();
+      fetchLiveUsgsData(false);
+    });
+  </script>
+</body>
+</html>
