@@ -232,7 +232,7 @@
           <span>Gage Height</span>
         </label>
         <label class="series-toggle inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer select-none hover:bg-slate-100 transition">
-          <input type="checkbox" data-series="rate" checked class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#d97706" />
+          <input type="checkbox" data-series="rate" class="w-4 h-4 rounded border-slate-300 cursor-pointer" style="accent-color:#d97706" />
           <span class="w-3 h-0.5 rounded" style="background:#d97706"></span>
           <span>Rate of Change</span>
         </label>
@@ -259,6 +259,7 @@
             <button type="button" data-shift-hours="-1" title="Shift Hurricane Ian start -1 hour" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">-1h</button>
             <button type="button" data-shift-hours="1" title="Shift Hurricane Ian start +1 hour" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">+1h</button>
             <button type="button" data-shift-hours="24" title="Shift Hurricane Ian start +1 day" class="ian-shift-btn px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">+1d</button>
+            <button type="button" id="ianResetBtn" title="Reset Hurricane Ian start to 09/28/2022 00:00" class="px-2 py-1 rounded-lg bg-white hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold transition cursor-pointer">Reset</button>
           </div>
 
         </div>
@@ -433,7 +434,7 @@
     let movingAvgHours = 1; // 0 = off
     let showMovingAvg = true;
     let showHurricaneIan = false;
-    let visibleSeries = { level: true, rate: true, ianLevel: false, ianRate: false }; // Ian is on when either Ian series is shown
+    let visibleSeries = { level: true, rate: false, ianLevel: false, ianRate: false }; // Ian is on when either Ian series is shown
     let ianStartMs = IAN_DEFAULT_START_MS;
     let ianReadingsCache = {}; // stationId -> parsed saved Ian readings
     let liveRequestSeq = 0; // latest live request number (older responses are discarded)
@@ -475,10 +476,47 @@
       return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
     }
 
-    function formatEstLabelShort(ms) {
+    // Evenly spaced x-axis ticks on round EST boundaries (hours, days, or month starts) for a time span
+    function buildTimeTicks(minMs, maxMs) {
+      const HOUR = 3600000;
+      const DAY = 24 * HOUR;
+      const spanMs = maxMs - minMs;
+      const ticks = [];
+      if (spanMs <= 0) return [{ value: minMs }];
+
+      if (spanMs > 60 * DAY) {
+        // Month starts (EST); every other month once the span gets long
+        const stepMonths = spanMs > 200 * DAY ? 2 : 1;
+        const d = new Date(minMs + EST_OFFSET_MS);
+        let y = d.getUTCFullYear();
+        let m = d.getUTCMonth() + 1;
+        while (true) {
+          if (m > 11) { y += Math.floor(m / 12); m %= 12; }
+          const ms = Date.UTC(y, m, 1) - EST_OFFSET_MS;
+          if (ms > maxMs) break;
+          if (ms >= minMs && m % stepMonths === 0) ticks.push({ value: ms });
+          m += 1;
+        }
+        return ticks;
+      }
+
+      const steps = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 3 * DAY, 7 * DAY, 14 * DAY];
+      const step = steps.find((s) => spanMs / s <= 10) || 14 * DAY;
+      // Align to the step in EST so ticks land on midnight / round hours
+      let t = Math.ceil((minMs + EST_OFFSET_MS) / step) * step - EST_OFFSET_MS;
+      for (; t <= maxMs; t += step) ticks.push({ value: t });
+      return ticks;
+    }
+
+    function formatTimeTick(ms, spanMs) {
       const d = new Date(ms + EST_OFFSET_MS);
       const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
       const dd = String(d.getUTCDate()).padStart(2, "0");
+      if (spanMs > 60 * 86400000) {
+        const mon = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getUTCMonth()];
+        return `${mon} '${String(d.getUTCFullYear()).slice(2)}`;
+      }
+      if (spanMs > 4 * 86400000) return `${mm}/${dd}`;
       const hh = String(d.getUTCHours()).padStart(2, "0");
       const min = String(d.getUTCMinutes()).padStart(2, "0");
       return `${mm}/${dd} ${hh}:${min}`;
@@ -618,7 +656,7 @@
       return prefix.concat(basePts);
     }
 
-    // Saved Hurricane Ian readings (2022-09-26 00:00 to 2022-10-16 23:45 EST) from ian-2022-data.js; [] if unavailable
+    // Saved Hurricane Ian readings (2022-09-26 00:00 to 2022-10-27 23:45 EST) from ian-2022-data.js; [] if unavailable
     function getSavedIanReadings(stationId) {
       if (ianReadingsCache[stationId]) return ianReadingsCache[stationId];
       const saved = window.IAN_2022_DATA;
@@ -945,7 +983,11 @@
       }
 
       const isInHr = rateUnit === "in_hr";
-      const labels = processedData.map((d) => formatEstLabelShort(d.ms));
+      // Numeric timestamps on a linear x-axis, so spacing reflects real time (daily means + 15-min tail mix in 30d/365d)
+      const labels = processedData.map((d) => d.ms);
+      const xMinMs = processedData.length ? processedData[0].ms : 0;
+      const xMaxMs = processedData.length ? processedData[processedData.length - 1].ms : 0;
+      const xSpanMs = xMaxMs - xMinMs;
       const levelValues = processedData.map((d) => d.value);
       const rawRateValues = processedData.map((d) => (isInHr ? d.rateInHr : d.rateFtHr));
       const movAvgValues = processedData.map((d) => (isInHr ? d.movAvgInHr : d.movAvgFtHr));
@@ -1119,11 +1161,19 @@
           },
           scales: {
             x: {
+              type: "linear",
+              min: xMinMs,
+              max: xMaxMs,
               grid: { display: false },
+              afterBuildTicks: (scale) => {
+                scale.ticks = buildTimeTicks(xMinMs, xMaxMs);
+              },
               ticks: {
-                maxTicksLimit: 10,
+                autoSkip: true,
+                maxRotation: 0,
                 font: { family: "Inter", size: 11 },
-                color: "#64748b"
+                color: "#64748b",
+                callback: (value) => formatTimeTick(value, xSpanMs)
               }
             },
             yLevel: {
@@ -1196,7 +1246,7 @@
           ? "Live USGS readings"
           : dataSource === "cached" ? "Cached snapshot (live data unavailable)" : "SIMULATED data — not real readings";
         const ianText = showHurricaneIan
-          ? (getSavedIanReadings(currentStationId).length > 0 ? " • Ian: saved USGS readings 9/26–10/16/2022" : " • Ian: no saved data for this station")
+          ? (getSavedIanReadings(currentStationId).length > 0 ? " • Ian: saved USGS readings 9/26–10/27/2022" : " • Ian: no saved data for this station")
           : "";
         sourceLabel.textContent = `${station.dropdownLabel} • ${srcText}${ianText} • Times in EST`;
       }
@@ -1435,6 +1485,15 @@
           }
           loadHurricaneIanData();
         });
+      });
+
+      // Reset the Hurricane Ian start back to its original date/time (09/28/2022 00:00 EST)
+      document.getElementById("ianResetBtn")?.addEventListener("click", () => {
+        if (ianStartMs === IAN_DEFAULT_START_MS) return;
+        ianStartMs = IAN_DEFAULT_START_MS;
+        updateIanHeaderLabels();
+        if (showHurricaneIan) loadHurricaneIanData();
+        showToast("Hurricane Ian start reset to 09/28/2022 00:00 EST");
       });
 
       // Auto-refresh pause/resume, manual refresh, retry, and export
